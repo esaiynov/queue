@@ -1,0 +1,44 @@
+<!doctype html><html lang="kk"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Электрондық кезек</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,sans-serif;background:linear-gradient(160deg,#0b2f7a,#051a47);position:relative;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}
+.card{width:100%;max-width:380px}
+.lbl{opacity:.7;font-size:16px}.big{font-size:120px;font-weight:800;line-height:1.1}
+.box{background:rgba(255,255,255,.1);border-radius:20px;padding:22px;margin-top:18px}
+.num{font-size:44px;font-weight:700}
+button{width:100%;padding:20px;font-size:22px;border:0;border-radius:16px;background:#2f7bff;color:#fff;font-weight:700;margin-top:22px}
+.turn{background:#f5c518;color:#0b2f7a;animation:p 1s infinite alternate}
+@keyframes p{to{transform:scale(1.03)}}
+.col{position:absolute;top:18px;left:0;right:0;text-align:center;font-weight:600;letter-spacing:.5px;color:#cfe0ff;font-size:clamp(13px,1.6vw,26px);padding:0 16px}.col{font-size:14px}</style></head><body><div class="col">Ақтөбе жоғары политехникалық колледжі</div><div class="card" id="app"></div>
+<script>
+var S={serving:0,waiting:[]};
+var qid=localStorage.qid||(localStorage.qid=Math.random().toString(36).slice(2)+Date.now().toString(36));
+var wasTurn=false;
+function mine(){return +localStorage.qn||0}
+function render(){
+  var m=mine(),w=S.waiting,idx=w.indexOf(m),h='';
+  if(m&&idx<0&&S.serving!==m){localStorage.removeItem('qn');m=0}
+  if(!m){
+    h='<div class="lbl">Қазір қызмет көрсетілуде</div><div class="big">'+(S.serving||'—')+'</div>'+
+      '<div class="lbl">Кезекте: '+w.length+' адам</div><button id="take">Кезекке тұру</button>';
+  }else if(S.serving===m){
+    h='<div class="box turn"><div class="lbl" style="color:#0b2f7a">Сіздің нөміріңіз</div><div class="big">'+m+'</div><div class="num">Сіздің кезегіңіз!<br>Үстелге келіңіз</div></div>';
+    if(!wasTurn&&navigator.vibrate)navigator.vibrate([300,150,300]);
+  }else{
+    h='<div class="lbl">Сіздің нөміріңіз</div><div class="big">'+m+'</div>'+
+      '<div class="box"><div class="lbl">Алдыңызда</div><div class="num">'+idx+' адам</div>'+
+      (idx===0?'<div class="lbl" style="margin-top:8px">Келесі сіз! Дайын болыңыз</div>':'')+'</div>'+
+      '<div class="box"><div class="lbl">Қазір шақырылды</div><div class="num">'+(S.serving||'—')+'</div></div>';
+  }
+  wasTurn=(m&&S.serving===m);
+  document.getElementById('app').innerHTML=h;
+  var b=document.getElementById('take');if(b)b.onclick=take;
+}
+function take(){
+  fetch('/api/take',{method:'POST',body:JSON.stringify({id:qid})}).then(r=>r.json()).then(d=>{localStorage.qn=d.number;render()});
+}
+var es=new EventSource('/events');
+es.onmessage=function(e){S=JSON.parse(e.data);render()};
+render();
+</script></body></html>

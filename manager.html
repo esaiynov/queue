@@ -1,0 +1,37 @@
+<!doctype html><html lang="kk"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Менеджер</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,sans-serif;background:linear-gradient(160deg,#0b2f7a,#051a47);position:relative;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}
+.card{width:100%;max-width:420px}.lbl{opacity:.7}.big{font-size:110px;font-weight:800;line-height:1.1;color:#fff}
+button{width:100%;padding:22px;font-size:24px;border:0;border-radius:16px;background:#2f7bff;color:#fff;font-weight:700;margin-top:14px}
+button.s{background:rgba(255,255,255,.16);font-size:17px;padding:14px}
+.chip{display:inline-block;background:rgba(255,255,255,.16);border-radius:10px;padding:6px 14px;margin:3px;font-size:22px;font-weight:700}
+input{padding:14px;font-size:20px;border-radius:12px;border:0;width:100%;text-align:center}
+#msg{color:#fca5a5;min-height:22px;margin-top:8px}
+.col{position:absolute;top:18px;left:0;right:0;text-align:center;font-weight:600;letter-spacing:.5px;color:#cfe0ff;font-size:clamp(13px,1.6vw,26px);padding:0 16px}.col{font-size:14px}</style></head><body><div class="col">Ақтөбе жоғары политехникалық колледжі</div><div class="card">
+<div id="login"><h2>Менеджер PIN</h2><input id="pin" type="password" inputmode="numeric" placeholder="PIN"><button id="ok">Кіру</button></div>
+<div id="panel" style="display:none">
+  <div class="lbl">Қазір шақырылды</div><div class="big" id="cur">—</div>
+  <div class="lbl">Кезекте: <b id="cnt">0</b> адам</div><div id="list" style="margin:10px 0"></div>
+  <button id="next">Келесі →</button>
+  <button class="s" id="recall">🔔 Қайта шақыру</button>
+  <button class="s" id="reset" style="background:#7f1d1d">Кезекті тазалау</button>
+  <div id="msg"></div>
+</div></div>
+<script>
+var pin=localStorage.qpin||'';
+function $(i){return document.getElementById(i)}
+function show(){$('login').style.display=pin?'none':'block';$('panel').style.display=pin?'block':'none'}
+function api(p){return fetch('/api/'+p,{method:'POST',headers:{'x-pin':pin},body:'{}'}).then(function(r){return r.json().then(function(d){
+  if(r.status===401){localStorage.removeItem('qpin');pin='';show();$('pin').value='';alert(d.error)}
+  else if(!r.ok)$('msg').textContent=d.error;else $('msg').textContent='';return d})})}
+$('ok').onclick=function(){pin=$('pin').value;localStorage.qpin=pin;show()};
+$('next').onclick=function(){api('next')};
+$('recall').onclick=function(){api('recall')};
+$('reset').onclick=function(){if(confirm('Барлық кезекті тазалау керек пе?'))api('reset')};
+function render(s){$('cur').textContent=s.serving||'—';$('cnt').textContent=s.waiting.length;
+  $('list').innerHTML=s.waiting.slice(0,10).map(function(n){return '<span class="chip">'+n+'</span>'}).join('')}
+new EventSource('/events').onmessage=function(e){render(JSON.parse(e.data))};
+show();
+</script></body></html>

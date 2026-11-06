@@ -1,0 +1,8 @@
+{
+  "name": "electronic-queue",
+  "version": "1.0.0",
+  "description": "Бір үстелге арналған электрондық кезек",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" }
+}

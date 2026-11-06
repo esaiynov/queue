@@ -1,0 +1,37 @@
+<!doctype html><html lang="kk"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Кезек экраны</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;height:100vh;font-family:system-ui,sans-serif;background:linear-gradient(160deg,#0b2f7a,#051a47);position:relative;color:#fff;display:grid;grid-template-columns:1fr 360px;overflow:hidden}
+.main{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.t{font-size:3vw;opacity:.7}.cur{font-size:26vw;font-weight:800;line-height:1;color:#fff;text-shadow:0 0 40px rgba(120,170,255,.6)}
+.cur.f{animation:f 1.2s 3}@keyframes f{50%{color:#f5c518;transform:scale(1.08)}}
+.side{background:rgba(0,0,0,.28);padding:28px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.side h2{margin:0;font-size:22px;opacity:.8;font-weight:600}
+#qr{background:#fff;padding:12px;border-radius:12px}
+#list{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.chip{background:rgba(255,255,255,.16);border-radius:12px;padding:8px 18px;font-size:34px;font-weight:700}
+#snd{position:fixed;bottom:12px;left:12px;opacity:.5;font-size:14px;padding:6px 10px;border-radius:8px;border:0}
+.col{position:absolute;top:18px;left:0;right:0;text-align:center;font-weight:600;letter-spacing:.5px;color:#cfe0ff;font-size:clamp(13px,1.6vw,26px);padding:0 16px}</style></head><body>
+<div class="col">Ақтөбе жоғары политехникалық колледжі</div><div class="main"><div class="t">Қазір шақырылды</div><div class="cur" id="cur">—</div></div>
+<div class="side">
+  <h2>Келесі нөмірлер</h2><div id="list"></div><div id="cnt" style="opacity:.6"></div>
+  <div style="flex:1"></div>
+  <h2>Нөмір алу үшін QR сканерлеңіз</h2><div id="qr"></div>
+</div>
+<button id="snd">🔔 Дыбысты қосу</button>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+var calls=null,ctx=null;
+document.getElementById('snd').onclick=function(){ctx=new(window.AudioContext||window.webkitAudioContext)();this.style.display='none';beep()};
+function beep(){if(!ctx)return;[660,880].forEach(function(f,i){var o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=f;o.connect(g);g.connect(ctx.destination);g.gain.setValueAtTime(.3,ctx.currentTime+i*.25);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+i*.25+.4);o.start(ctx.currentTime+i*.25);o.stop(ctx.currentTime+i*.25+.45)})}
+function render(s){
+  var c=document.getElementById('cur');c.textContent=s.serving||'—';
+  if(calls!==null&&s.call!==calls){c.classList.remove('f');void c.offsetWidth;c.classList.add('f');beep()}
+  calls=s.call;
+  document.getElementById('list').innerHTML=s.waiting.slice(0,8).map(function(n){return '<div class="chip">'+n+'</div>'}).join('');
+  document.getElementById('cnt').textContent=s.waiting.length?('Кезекте: '+s.waiting.length+' адам'):'Кезек бос';
+}
+var es=new EventSource('/events');es.onmessage=function(e){render(JSON.parse(e.data))};
+fetch('/api/info').then(r=>r.json()).then(function(d){try{new QRCode(document.getElementById('qr'),{text:d.joinUrl,width:260,height:260})}catch(e){document.getElementById('qr').textContent=d.joinUrl}});
+</script></body></html>
